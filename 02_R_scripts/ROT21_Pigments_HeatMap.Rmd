@@ -1,0 +1,132 @@
+---
+title: "ROT21 pigments heatmap"
+author: "Antonia Klatt"
+date: "2026-03-25"
+output: html_document
+---
+
+This R code is adapted from Petra Zahajská orcid.org/0000-0001-5858-0616
+
+```{r}
+knitr::opts_chunk$set(echo = TRUE)
+
+#Load R packages 
+
+library("pacman")
+
+pacman::p_load("readxl", "dplyr", "tidyr", "openxlsx", "FactoMineR", "cluster", "factoextra", "magrittr", "vegan", "ggplot2", "rioja", "psych", "dendroextras", "rcartocolor", "latex2exp", "ggsci", "ggpubr", "corrplot", "viridis", "cowplot", "ggrepel", "janitor", "pheatmap","scatterplot3d", "tidypaleo", "grid", "ggtext", "bruceR", "forcats", "ggthemes", "ggmap", "maps", "reshape2")
+
+
+##Import pigment data (pigment area on HPLC) and pigment producers
+
+
+pig_d <- read_excel("C:\\Users\\klatt0000\\Desktop\\Basel AG Ladd\\PhD project\\PhD thesis\\Chapter 3 ROT21\\C3_Rscripts\\R_markdown\\Ch3_data_forR\\ROT21_pigmentExtracts.xlsx", sheet = "pig_area")
+
+pig_prod <- read_excel("C:\\Users\\klatt0000\\Desktop\\Basel AG Ladd\\PhD project\\PhD thesis\\Chapter 3 ROT21\\C3_Rscripts\\R_markdown\\Ch3_data_forR\\ROT21_pigmentExtracts.xlsx", sheet = "pig_prod")
+
+pig_prod_df <- as.data.frame(pig_prod)
+rownames(pig_prod_df) <- pig_prod_df[,2]
+pig_prod_df
+
+
+#scaling of pigment area data for plotting
+
+#exclude depth and age for scaling
+
+pig <- select(pig_d, 3:15)
+
+
+#Data Clean Up --> NA values are replaced by zero, as pigments were not in the sample (area is zero)
+
+
+pig_filled <- pig %>% replace(is.na(.), 0) 
+
+pig_d <- pig_d %>% replace(is.na(.), 0)
+
+
+## K-means clustering
+
+#deciding on the number of clusters, with the elbow method
+
+
+fviz_nbclust(pig_filled, kmeans, method = "wss")
+
+
+#Plotting the selected number of clusters on top of the plot #5 clusters when additionally looking at data in heat map
+
+
+fviz_nbclust(pig_filled, kmeans, method = "wss") + geom_vline(xintercept = 5, linetype = 2)+ 
+  #here you can add the number of clusters to be shown in with a line 
+  labs(subtitle = "Elbow method")
+#dev.off()
+
+
+## Log transformation of data 
+#need to replace 0 values 
+#Function to replace zeros with half of minimum non-zero value
+
+replace_zeros <- function(x) {
+  min_value <- min(x[x != 0])  # Find minimum non-zero value
+  if (is.na(min_value)) min_value <- 0  # Handle case with all zeros
+  x[x == 0] <- min_value / 1000  # Replace zeros with 1/1000 of minimum
+  return(x)
+}
+
+# Apply the function to each column of the data frame - replacing zeros
+data <- as.data.frame(sapply(pig_filled, replace_zeros))
+
+trans_data <- as.data.frame(t(data))
+alr <- log(trans_data)
+
+alr_safe <- bind_cols("age_BP" = pig_d$age_BP_1950, t(alr))
+
+
+#z-scoring of log-transformed data #scale function does z-scoring by default
+
+alr_mat <- as.matrix(alr_safe[,2:14])
+rownames(alr_mat) <- alr_safe$age_BP
+
+alr_scaled<- scale(alr_mat)
+
+
+#column wise clustering of pigment areas 
+
+colnames(alr_scaled) <- c("Fucoxanthin", "Alloxantin", "Myxoxantophyll", "Diatoxanthin", "Zeaxantin", "Lutein",
+                          "Monadoxanthin", "mysterious Carotenoids", "a_Carotene", "Echinenone",
+                          "Canthaxanthin", "bb_Carotene", "Chlorophylls")
+
+pig_prod_df <- pig_prod_df[,-1]
+annotation_col = pig_prod_df[2]
+
+ann_colors = list(
+  producer = c(Cryptophytes = "maroon", Cyanobacteria ="royalblue4", `Green algae` = "chartreuse3", 
+               Silicifiers= "lavender", `algal productivtiy`="aquamarine4"))
+
+```
+
+## Fig. 4C
+
+```{r}
+
+pheatmap(alr_scaled, show_rownames=T,show_colnames=T,
+         annotation_col=annotation_col, #annotation_row = annotation_row,
+         annotation_colors = ann_colors,
+         scale = "none", #clustering_method="ward.D2",
+         cluster_rows = F,
+         clustering_distance_cols="euclidean", #clustering_distance_rows = "euclidean",
+         # cutree_rows = 5,
+         cutree_cols = 5, #treeheight_row = 50,
+         border_color = "white",
+         treeheight_col = 50, 
+         color = colorRampPalette(c("darkslategray","cadetblue","cadetblue3","lightyellow2",
+                                    "tan","tan3","red4"))(15),
+         fontsize = 20,
+         angle_col = 45)
+
+#{r, fig.width = 14.5, fig.height = 10, echo=FALSE}
+
+```
+
+
+
+

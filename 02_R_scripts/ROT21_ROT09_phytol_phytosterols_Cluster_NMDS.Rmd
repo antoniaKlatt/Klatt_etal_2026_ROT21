@@ -1,0 +1,222 @@
+---
+title: "ROT21 ROT09 phytol phytosterols clustering"
+author: "Antonia Klatt"
+date: "2026-03-26"
+output: html_document
+---
+
+```{r}
+knitr::opts_chunk$set(echo = TRUE)
+
+#Load R packages
+
+library(readr)
+library(ggplot2)
+library(gridExtra)
+library(grid)
+library(cowplot)
+library(vegan)
+library(dplyr)
+library(patchwork)
+library(ggrepel)
+library(rioja)
+library(ggdendro)
+library(dendextend)
+library(factoextra)
+
+#Import ROT21 ROT09 phytol phytosterol relative concentration data
+
+ROT21_ROT09_phytos_rel_conc.a <- read.csv('C:\\Users\\klatt0000\\Desktop\\Basel AG Ladd\\PhD project\\PhD thesis\\Chapter 3 ROT21\\C3_Rscripts\\R_markdown\\Ch3_data_forR\\ROT21_ROT09_phytol_phytosterols_rel_conc.csv', header = TRUE , sep = "," , stringsAsFactors = FALSE, na.strings = "#NV")
+
+#data from the short core (ROT09) are from Naeher et al. (2012)
+#https://doi.org/10.1016/j.orggeochem.2012.05.014
+
+
+ROT21_ROT09_phytos_rel_conc <- ROT21_ROT09_phytos_rel_conc.a[,1:8]
+
+#IMPORTANT NOTE: Ages are reported as ages before 2024 --> transform into CE ages: subtract ages from 2024
+
+ROT21_ROT09_phytos_rel_conc$age_CE <- 2024-(ROT21_ROT09_phytos_rel_conc$age_before_2024)
+
+
+#unconstrained cluster analysis
+
+#add character vector with CE and BCE (negative values are BCE)
+
+ROT21_ROT09_phytos_rel_conc$group_CE <- factor(ifelse(ROT21_ROT09_phytos_rel_conc$age_CE > 0, "CE", "BCE"))
+
+
+#use abs() function to calculate absolute values --> transform negative ages into positive values for BCE
+
+ROT21_ROT09_phytos_rel_conc$age_CE2 <- abs(ROT21_ROT09_phytos_rel_conc$age_CE)
+
+
+#round CE and BCE ages to full numbers
+  
+ROT21_ROT09_phytos_rel_conc$age_CE3 <- round(ROT21_ROT09_phytos_rel_conc$age_CE2, digits = 0)
+
+
+#add column combining ages with age_group (need to add age group as duplicated row.names are not allowed)
+
+ROT21_ROT09_phytos_rel_conc$age_group_CE <- paste(ROT21_ROT09_phytos_rel_conc$age_CE3,
+                                                  ROT21_ROT09_phytos_rel_conc$group_CE,
+                                                  ROT21_ROT09_phytos_rel_conc$age_group)
+
+
+#create dissimilarity matrix based on Bray Curtis distance 
+
+ROT21_ROT09_phytos_rel_conc.b <- ROT21_ROT09_phytos_rel_conc[,2:7]
+
+
+row.names(ROT21_ROT09_phytos_rel_conc.b) <- ROT21_ROT09_phytos_rel_conc$age_group_CE
+
+#rownames
+
+ROT21_ROT09_dist <- vegdist(ROT21_ROT09_phytos_rel_conc.b, method="bray", binary=FALSE, diag=FALSE, upper=FALSE)
+
+ROT21_ROT09_clust <-hclust(ROT21_ROT09_dist, method = "ward.D2")
+
+plot(ROT21_ROT09_clust , cex.axis=0.5, cex= 0.75, main= "clust ROT21 ROT09")
+
+#extract dendrogram
+
+ROT21_ROT09_dendro <- as.dendrogram(ROT21_ROT09_clust)
+
+ROT21_ROT09_dend_data <- dendro_data(ROT21_ROT09_clust)
+
+#plotting ROT21 ROT09 cluster 
+
+#define colors manually based on row.name age group plot (there's definetly an easier/faster way to do that for larger datasets...)
+
+ROT21_12_clust_age_color<- c(rep('thistle3',18), 'plum4',rep('lightskyblue',2),rep('thistle3',11),
+                       'paleturquoise3','darkseagreen2','lightskyblue','palegoldenrod',"gold",
+                       'palegoldenrod',"gold",'palegoldenrod','darkseagreen4','gold', rep("palegoldenrod",6),
+                       'gold','palegoldenrod','thistle3','darkseagreen4','paleturquoise3',rep('thistle3',4),
+                       'palegoldenrod', 'darkseagreen2', 'palegoldenrod','darkseagreen2',rep("palegoldenrod",2),
+                       rep('thistle3',2),rep("darkseagreen2",3), 'palegoldenrod', 'darkseagreen2','plum4',
+                       rep("darkseagreen2",2),'palegoldenrod',rep("darkseagreen4",2),'lightskyblue',
+                       "darkgoldenrod3",'plum4',"darkgoldenrod3",rep("palegoldenrod",3),'plum4','gold',
+                       rep('darkgoldenrod3',5), rep("palegoldenrod",2), rep("gold",2),
+                       'paleturquoise3',"darkgoldenrod3", 'palegoldenrod',
+                       "darkgoldenrod3", 'palegoldenrod', 'darkseagreen2',rep("palegoldenrod",2), 'gold',
+                       'darkseagreen4','palegoldenrod',rep('darkgoldenrod3',2),'palegoldenrod','darkgoldenrod3',
+                       'darkseagreen2','palegoldenrod',rep('thistle3',4))
+                       
+                     
+Fig6A <- ggplot(segment(ROT21_ROT09_dend_data)) +
+  geom_segment(aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_text(data= label(ROT21_ROT09_dend_data), aes(x = x, y = y, label = label, hjust =- 0.1), 
+            size=5, color= ROT21_12_clust_age_color)+
+  theme_dendro()+
+  coord_flip() + 
+  scale_y_reverse(expand=c(0.15,0.15))+
+  scale_x_continuous(expand=c(0.005,0.005))+
+  theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
+
+
+```
+
+#Fig.6A
+
+```{r, fig.width = 10, fig.height = 22.5, echo=FALSE}
+
+plot(Fig6A)
+
+```
+
+```{r}
+
+#plotting NMDS 
+
+meta.ROT21_09.phytos <-metaMDS(ROT21_ROT09_phytos_rel_conc[,2:7], k=3, autotransform= FALSE, try= 100, 
+                               trymax= 100, distance = "bray") #stress 0.0.058
+
+stressplot(meta.ROT21_09.phytos)
+
+
+NMDS_ROT21_09_rel_phytos_sample <- as.data.frame(scores(meta.ROT21_09.phytos, "sites")) #sites is the same as the sample 
+
+NMDS_ROT21_09_rel_phytos_species <- as.data.frame(scores(meta.ROT21_09.phytos, "species")) #species is sterols
+
+NMDS_ROT21_09_rel_phytos_sample$group <- ROT21_ROT09_phytos_rel_conc$age_group
+
+NMDS_ROT21_09_rel_phytos_sample$age_BP <- round(ROT21_ROT09_phytos_rel_conc$age_before_2024, digits=0)
+
+#re-order for better visualization
+
+NMDS_ROT21_09_rel_phytos_sample.ord <- NMDS_ROT21_09_rel_phytos_sample[order(NMDS_ROT21_09_rel_phytos_sample$age_BP, decreasing = TRUE), ]
+
+#plotting NMDS 
+
+Fig6B <- ggplot() + 
+  ggtitle("ROT21 ROT09 stress: 0.058", subtitle="ROT21 ROT09 stress: 0.058")+
+  geom_point(data=NMDS_ROT21_09_rel_phytos_sample.ord, 
+             aes(x=NMDS1,y=NMDS2,shape= group, color= group), 
+             size= 5.5, stroke=2, alpha=0.85)+ 
+  scale_color_manual(labels=c(YD_Chara= "Chara (YD)",
+                              YD= "Younger Dryas",
+                              HTM1 = "HTM1",
+                              HTM2 = "HTM2",
+                              Neolithic= "Neolithic",
+                              Roman_period= "Roman period",
+                              modern_eutrophication="modern eutrophication",
+                              Holocene= "Holocene",
+                              short_core="ROT09"), 
+                     values= c(YD_Chara= 'paleturquoise3',
+                               YD= 'lightskyblue',
+                               HTM1="gold",
+                               HTM2="darkgoldenrod3",
+                               Neolithic= "darkseagreen2",
+                               Roman_period= "darkseagreen4",
+                               modern_eutrophication="plum4",
+                               Holocene= "palegoldenrod",
+                               short_core='thistle3'),
+                     breaks= c("YD_Chara", "YD", "Holocene", "HTM1", "HTM2", "Neolithic", "Roman_period",
+                               "modern_eutrophication","short_core"))+
+  scale_shape_manual(labels=c(YD_Chara= "Chara (YD)",
+                              YD= "Younger Dryas",
+                              HTM1 = "HTM1",
+                              HTM2 = "HTM2",
+                              Neolithic= "Neolithic",
+                              Roman_period= "Roman period",
+                              modern_eutrophication="modern eutrophication",
+                              Holocene= "Holocene",
+                              short_core="ROT09"),
+                     values= c(YD_Chara= 8,
+                               YD= 4,
+                               HTM1=24,
+                               HTM2=25,
+                               Neolithic= 1 ,
+                               Roman_period= 1,
+                               modern_eutrophication= 1,
+                               Holocene= 22,
+                               short_core=13),
+                     breaks= c("YD_Chara", "YD", "Holocene", "HTM1", "HTM2", "Neolithic", "Roman_period",
+                               "modern_eutrophication","short_core"))+
+  xlab(expression(atop('',"NMDS1")))+ylab(expression(atop("NMDS2", "")))+
+  theme(axis.line = element_line(colour = "black"), 
+        panel.background = element_blank(),
+        plot.title = element_text(size=30, face='bold'),
+        plot.subtitle = element_text(color= 'white', size=15),
+        axis.text.x = element_text(size=30, color= "black"),
+        axis.text.y = element_text(size=30, color= "black"),
+        axis.title.x = element_text(size = 30 ),
+        axis.title.y = element_text(size = 30),
+        panel.border = element_rect(colour = "black", fill=NA, linewidth=0.75),
+        legend.text=element_text(size=27.5, margin=margin(l=20)),
+        legend.title=element_blank(),
+        legend.key=element_blank(),
+        legend.key.spacing.y = unit(1.5, 'cm'),
+        legend.position = "right",
+        plot.margin = unit(c(1,0.5,0.5,0.5), "cm"))+
+  guides(color=guide_legend(byrow=TRUE))
+
+```
+
+#Fig.6B
+
+```{r, fig.width = 17.5, fig.height = 12.5, echo=FALSE}
+
+plot(Fig6B)
+
+```

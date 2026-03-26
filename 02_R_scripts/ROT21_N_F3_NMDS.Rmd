@@ -1,0 +1,106 @@
+---
+title: "ROT21 N F3 NMDS"
+author: "Antonia Klatt"
+date: "2026-03-26"
+output: html_document
+---
+
+```{r}
+knitr::opts_chunk$set(echo = TRUE)
+
+#Load R packages
+
+library(readr)
+library(ggplot2)
+library(gridExtra)
+library(grid)
+library(cowplot)
+library(vegan)
+library(dplyr)
+library(patchwork)
+library(ggrepel)
+
+
+#Import relative alcohol concentrations (N F3) (without alkanols & alcohol m/z 486)
+
+ROT21_F3_rel_conc <- read.csv("C:\\Users\\klatt0000\\Desktop\\Basel AG Ladd\\PhD project\\PhD thesis\\Chapter 3 ROT21\\C3_Rscripts\\R_markdown\\Ch3_data_forR\\ROT21_N_F3_rel_conc_wo_alkanols_alc486.csv", row.names=1, 
+                              header = TRUE , sep = "," , stringsAsFactors = FALSE, na.strings = "#NV")
+
+#exclude rows with NA values for NMDS
+
+ROT21_F3_rel_conc.woNA <- na.omit(ROT21_F3_rel_conc)
+
+
+#plotting NMDS 
+
+meta.ROT21.F3 <-metaMDS(ROT21_F3_rel_conc.woNA, k=3, autotransform= FALSE, try= 100, trymax= 100, 
+                              distance = "bray") #stress 0.079
+stressplot(meta.ROT21.F3)
+
+
+NMDS_ROT21_rel_F3_sample <- as.data.frame(scores(meta.ROT21.F3, "sites")) #sites is the same as the sample 
+
+NMDS_ROT21_rel_F3_species <- as.data.frame(scores(meta.ROT21.F3, "species")) #species is sterols
+
+
+#re-order species for better plot visualization (layer order)
+
+NMDS_ROT21_rel_F3_species$number <- c(20,1,2,19,18,3,17,4,5,6,16,7,8,9,10,15,11,12,13,14)
+
+NMDS_ROT21_rel_F3_species.ord <- NMDS_ROT21_rel_F3_species[order(NMDS_ROT21_rel_F3_species$number, 
+                                                                 decreasing = FALSE),] 
+
+#subset for plotting
+
+NMDS_ROT21_rel_F3_species.ord1 <- NMDS_ROT21_rel_F3_species.ord[1:14,]
+
+NMDS_ROT21_rel_F3_species.ord2 <- NMDS_ROT21_rel_F3_species.ord[15:20,]
+
+
+FigS3 <- ggplot() + 
+  ggtitle(expression(atop("ROT21 stress: 0.079")))+
+  geom_hline(yintercept=0, color = "gray60", linetype="dashed", linewidth=0.7)+
+  geom_vline(xintercept=0, color = "gray60", linetype="dashed", linewidth=0.7)+
+  geom_text(data= NMDS_ROT21_rel_F3_species.ord1,aes(x=NMDS1,y=NMDS2), label= c("cholesterol",
+                                                                           "cholestanol",  
+                                                                           "campestanol & x", 
+                                                                           "fungisterol", "sitosterol & x",
+                                                                           "chondrillasterol",
+                                                                            expression(beta*'-amyrin'),
+                                                                           "C30 sterol m/z 498", expression(atop(alpha*"-amyrin & lupeol &","22-dihydrochondrillasterol")),
+                                                                           "triterpenoid m/z 371 & x",
+                                                                           "lanosterol?", "friedelin & x",
+                                                                           "tetrahymanol", "diplopterol"), 
+            color="lightsteelblue", size= 9.5)+ 
+  geom_text(data=NMDS_ROT21_rel_F3_species.ord2,aes(x=NMDS1,y=NMDS2), label= c( "dinostanol & x",
+                                                                                 "sitostanol",  
+                                                                                 "stigmasterol", 
+                                                                                 "campesterol & x",
+                                                                                 'brassicasterol',
+                                                                                 'phytol'), 
+            color="black", size= 9.5)+
+  ylim(-0.5, 0.4)+ xlim(-0.475,0.475)+ 
+  xlab(expression(atop("","NMDS1")))+ylab("NMDS2")+
+  theme(axis.line = element_line(colour = "black"), 
+        panel.background = element_blank(),
+        plot.title = element_text(size=30, face="bold"),
+        legend.text=element_text(size=30),
+        legend.title=element_blank(),
+        legend.key=element_blank(),
+        legend.position = "none",
+        axis.text.x = element_text(size=30, color= "black"),
+        axis.text.y = element_text(size=30, color= "black"),
+        axis.title.x = element_text(size = 30),
+        axis.title.y = element_text(size = 30),
+        panel.border = element_rect(colour = "black", fill=NA, linewidth=0.75),
+        plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
+
+```
+
+#Fig.S3
+
+```{r, fig.width = 17.5, fig.height = 17.5, echo=FALSE}
+
+plot(FigS3)
+
+```

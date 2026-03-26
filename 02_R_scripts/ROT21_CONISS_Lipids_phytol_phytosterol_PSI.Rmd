@@ -1,0 +1,386 @@
+---
+title: "ROT21 CONISS Lipids Phytol Phytosterols PSI"
+author: "Antonia Klatt"
+date: "2026-03-25"
+output: html_document
+---
+
+```{r}
+knitr::opts_chunk$set(echo = TRUE)
+
+#Load R packages
+
+library(readr)
+library(ggplot2)
+library(gridExtra)
+library(grid)
+library(cowplot)
+library(vegan)
+library(rioja)
+library(dplyr)
+library(ggdendro)
+library(dendextend)
+library(reshape2)
+library(caret)
+library(patchwork)
+library(ggdendro)
+library(dendextend)
+
+#import lipid data 
+
+#absolute concentrations (ug/g TOC)
+
+ROT21_lipids_ug_gTOC <- read.csv("C:\\Users\\klatt0000\\Desktop\\Basel AG Ladd\\PhD project\\PhD thesis\\Chapter 3 ROT21\\C3_Rscripts\\R_markdown\\Ch3_data_forR\\ROT21_lipids_ug_gTOC.csv", header = TRUE , sep = "," , stringsAsFactors = FALSE, na.strings = "#NV")
+
+##add +1 to get rid of zeros for log transformation
+
+ROT21_lipids_ug_gTOC2 <- ROT21_lipids_ug_gTOC[,4:70]+1
+
+ROT21_lipids_ug_gTOC2$age_BP_1950 <- ROT21_lipids_ug_gTOC$age_BP_1950
+
+
+#relative concentrations (%)
+
+ROT21_lipids_rel <- read.csv("C:\\Users\\klatt0000\\Desktop\\Basel AG Ladd\\PhD project\\PhD thesis\\Chapter 3 ROT21\\C3_Rscripts\\R_markdown\\Ch3_data_forR\\ROT21_lipids_rel_conc.csv", header = TRUE , sep = "," , stringsAsFactors = FALSE, na.strings = "#NV", row.names= 1)
+
+
+#Phytol:sterol Index (PSI)
+
+ROT21_PSI <- read.csv("C:\\Users\\klatt0000\\Desktop\\Basel AG Ladd\\PhD project\\PhD thesis\\Chapter 3 ROT21\\C3_Rscripts\\R_markdown\\Ch3_data_forR\\ROT21_phytol_sterol_index.csv", header = TRUE , sep = "," , stringsAsFactors = FALSE, na.strings = "#NV")
+
+#GAM fitted trend for PSI
+
+GAM_ci_phytol.sterol.ratio <-  read.csv("C:\\Users\\klatt0000\\Desktop\\Basel AG Ladd\\PhD project\\PhD thesis\\Chapter 3 ROT21\\C3_Rscripts\\R_markdown\\Ch3_data_forR\\GAM_ci_PSI_260325.csv", header = TRUE , sep = "," , stringsAsFactors = FALSE, na.strings = "#NV")
+
+GAM_signif_phytol.sterol.ratio <-  read.csv("C:\\Users\\klatt0000\\Desktop\\Basel AG Ladd\\PhD project\\PhD thesis\\Chapter 3 ROT21\\C3_Rscripts\\R_markdown\\Ch3_data_forR\\GAM_signif_PSI_260325.csv", header = TRUE , sep = "," , stringsAsFactors = FALSE, na.strings = "#NV")
+
+
+```
+
+##Stratigraphically constrained clustering (CONISS) of relative lipid concentrations
+
+```{r}
+
+#create dissimilarity matrix based on Bray Curtis distance (like in NDMS)
+
+ROT21_Li_dist <- vegdist(ROT21_lipids_rel, method="bray", binary=FALSE, diag=FALSE, upper=FALSE)
+
+
+#CONISS constrained cluster analysis chclust(d, method = "coniss")
+
+ROT21_Li_CONISS <-chclust(ROT21_Li_dist, method = "coniss")
+
+
+plot(ROT21_Li_CONISS, cex.axis=0.5, cex= 0.75, main= "CONISS ROT21 Lipids")
+
+bstick(ROT21_Li_CONISS, ng=10, plot=TRUE, title = "Broken stick model CONISS ROT21 Lipids") #5 clusters significant
+
+
+#extract cluster number from chclust
+
+ROT21_Li_groups<-cutree(ROT21_Li_CONISS, k=5) #k=5 since we have 5 significant clusters according to bstick
+
+ROT21_Li_clust_Age <-cbind.data.frame(as.numeric(row.names(ROT21_lipids_rel)), ROT21_Li_groups)
+
+colnames(ROT21_Li_clust_Age) <- c("age_BP", "ROT21_Li_CONISS_cluster")
+
+
+#extract dendrogram
+
+ROT21_Li_dendro <- as.dendrogram(ROT21_Li_CONISS)
+
+ROT21_dend_data <- dendro_data(ROT21_Li_dendro)
+
+#replace labels (order) in dendrogram by actual ages with approxfun for aligning plots
+
+#Code adapted from https://stackoverflow.com/questions/65207033/how-do-i-plot-dendrogram-leaves-by-a-given-value-depth-in-a-sediment-core-rath (accessed 22.07.2025)
+
+dendAge <- approxfun(ROT21_dend_data$labels$x, as.numeric(as.character(ROT21_dend_data$labels$label))) 
+ROT21_dend_data$segments$x <- dendAge(ROT21_dend_data$segments$x)
+ROT21_dend_data$segments$xend <- dendAge(ROT21_dend_data$segments$xend)
+
+
+#group_by based on CONISS Cluster group (age)": https://forum.posit.co/t/dplyr-way-s-and-base-r-way-s-of-creating-age-group-from-age/89226/2 (11.07.025)
+
+#group1 : -17.289543 - 1073.983940
+#group2: 1291.211880 - 6936.603052
+#group3: 7029.950750- 9336.179104
+#group4: 10362.245900 - 11849.768800
+#group5: 12153.527800 - 12795.576380
+
+
+#coloring segment ends
+
+#code adapted from https://towardsdatascience.com/custom-coloring-dendrogram-ends-in-r-f1fa45e5077a/ (accessed 05.02.2026)
+
+#group1: 1-7
+#group2: 8-32
+#group3: 33-51
+#group4: 52-60
+#group5: 61-65
+
+
+dendrogram_segments <- ROT21_dend_data$segments # contains all dendrogram segment data
+
+# get terminal dendrogram segments
+dendrogram_ends <- dendrogram_segments %>%
+  filter(yend < 5) #set 5 as limit since we have 5 clusters
+
+#group1 : -17.289543 - 1073.983940
+#group2: 1291.211880 - 6936.603052
+#group3: 7029.950750- 9336.179104
+#group4: 10362.245900 - 11849.768800
+#group5: 12153.527800 - 12795.576380
+
+dendrogram_ends_group <- dendrogram_ends %>%
+  mutate(
+    # Create categories # have to round to higher numbers since otherwise it will exclude specific numbers from ages
+    coniss_group = dplyr::case_when(
+      x > -18 & x < 1074 ~ "CONISS5",
+      x > 1291 & x < 6937 ~ "CONISS4",
+      x > 7029 & x < 9337 ~ "CONISS3",
+      x > 10362 & x < 11850 ~ "CONISS2",
+      x > 12153 & x <  12796 ~ "CONISS1"
+    ),
+    # Convert to factor
+    coniss_group = factor(
+      coniss_group,
+      level = c("CONISS5" ,"CONISS4", "CONISS3","CONISS2", "CONISS1")
+    )
+  )
+
+#set color for groups
+
+dend_color <- c('CONISS5'='darkseagreen3', 'CONISS4'='plum3','CONISS3'='#339999','CONISS2'= '#ffcc99','CONISS1'= 'paleturquoise')
+
+
+pdend <- ggplot(segment(ROT21_dend_data)) +
+  ggtitle(expression('CONISS'['Lipids']), subtitle="CONISS")+
+  geom_vline(xintercept=1182.598, color = "slategray", linetype="dashed", linewidth=0.75)+
+  geom_vline(xintercept=6983.277, color = "slategray", linetype="dashed", linewidth=0.75)+
+  geom_vline(xintercept=9849.213, color = "slategray", linetype="dashed", linewidth=0.75)+
+  geom_vline(xintercept=12001.65, color = "slategray", linetype="dashed", linewidth=0.75)+
+  geom_segment( aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_segment(data=dendrogram_ends_group, aes(x = x, y = y, xend = xend, yend = yend, color= coniss_group), linewidth=1) +
+  scale_color_manual(values = dend_color)+
+  scale_x_continuous(limits = c(-71, 13000), breaks = seq( 0, 12000, by = 2000), expand= c(0.005,0.005))+  #put the y axis labes on the opposite side so when its flipped it will appear at top
+  scale_y_continuous(expand=c(0,0))+
+  theme_dendro()+
+  theme( plot.title = element_text(size=30, hjust=0.5),
+         plot.subtitle = element_text(color= 'white', size=15),
+         legend.position= 'none',
+         plot.margin = unit(c(1,0,0,0), "cm"))
+
+```
+
+##create plot with CONISS cluster dendrogram, phytol and phytosterol concentrations, and PSI values
+
+```{r}
+
+ROT21_Phytol <- melt(ROT21_lipids_ug_gTOC2, id.vars="age_BP_1950", 
+                     measure.vars=c("Phytol_ug_gTOC"))
+
+pPhytol_woAge <- ggplot() +
+  annotate("rect", xmin = 11700 ,xmax = 12900 ,ymin = -Inf, ymax = Inf, alpha=0.2, fill="skyblue")+ #YD
+  annotate("rect", xmin = 5900 ,xmax = 7800 ,ymin = -Inf, ymax = Inf, alpha=0.2, fill="goldenrod1")+ #HTM1
+  annotate("rect", xmin = 8800 ,xmax = 9800 ,ymin = -Inf, ymax = Inf, alpha=0.2, fill="goldenrod1")+ #HTM2
+  annotate("rect", xmin =  4588.20471 ,xmax = 3453.02185 ,ymin = -Inf, ymax = Inf, alpha=0.2,
+           fill="darkolivegreen")+ #AI1 potentially Neolithical impact
+  annotate("rect", xmin =  1300 ,xmax = 2300 ,ymin = -Inf, ymax = Inf, alpha=0.2, fill="darkolivegreen")+ 
+  #AI2 Roman period 
+  annotate("rect", xmin =  -40 ,xmax = 100 ,ymin = -Inf, ymax = Inf, alpha=0.2, fill="darkolivegreen")+ 
+  #AI4 modern eutrophication
+  geom_segment(mapping= aes(x = 12305, y = -Inf, xend = 12325, yend =Inf), color= "paleturquoise3")+ #Chara
+  geom_segment(mapping= aes(x = 12450, y = -Inf, xend = 12470, yend =Inf), color= "paleturquoise3")+ #Chara
+  geom_segment(mapping= aes(x = 12670, y = -Inf, xend = 12690, yend =Inf), color= "paleturquoise3")+ #Chara
+  geom_vline(xintercept=1182.598, color = "slategray", linetype="dashed", linewidth=0.75)+
+  geom_vline(xintercept=6983.277, color = "slategray", linetype="dashed", linewidth=0.75)+
+  geom_vline(xintercept=9849.213, color = "slategray", linetype="dashed", linewidth=0.75)+
+  geom_vline(xintercept=12001.65, color = "slategray", linetype="dashed", linewidth=0.75)+
+  geom_line(data=ROT21_Phytol[!is.na(ROT21_Phytol$value),],aes(x = age_BP_1950, y = log(value,10), 
+                                                               color= variable), linewidth=1.3, alpha=0.9) +    
+  scale_x_continuous(limits = c(-71, 13000), breaks = seq( 2000, 12000, by = 2000), expand=c(0.005,0.005))+
+  scale_y_continuous(position="left", expand=0.025, limits=c(log(35,10), log(1300, 10)))+
+  scale_color_manual(labels= c(Phytol_ug_gTOC = "Phytol"),
+                     values= c("Phytol_ug_gTOC" = "#009966"))+
+  xlab("cal years BP") + ylab(expression(atop(""~log*""['10']*"+1"~(mu*g~'/g'['TOC']))))+ 
+  theme(axis.line = element_line(colour = "black"), 
+        panel.background = element_blank(),
+        #legend.title = element_blank(),
+        axis.title.x = element_blank(),
+        axis.title.y = element_text(size=30,color="black"),
+        axis.line.x =element_blank(),
+        axis.text.y = element_text(size=30,color="black"),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        #legend.position=c(0.175, -0.05),
+        legend.position= "right",
+        legend.key = element_blank(),
+        legend.title = element_blank(),
+        legend.text = element_text(size=25, color="black"),
+        legend.key.spacing.y = unit(0.5, 'cm'),
+        legend.box.spacing = unit(1, 'cm'),
+        plot.margin = unit(c(0,0,0,0), "cm"))+
+  guides(color=guide_legend(ncol=1, byrow=TRUE, override.aes = list(linewidth = 2.5)))
+
+
+ROT21_Phytosterols1 <- melt(ROT21_lipids_ug_gTOC2, id.vars="age_BP_1950", 
+                            measure.vars=c("Brassicasterol_ug_gTOC", "Campesterol_plus_x_ug_gTOC"))
+
+ROT21_Phytosterols2 <- melt(ROT21_lipids_ug_gTOC2, id.vars="age_BP_1950", 
+                            measure.vars=c("Sitostanol_ug_gTOC", "Stigmasterol_ug_gTOC"))
+
+pPhytosterols1 <- ggplot() +
+  annotate("rect", xmin = 11700 ,xmax = 12900 ,ymin = -Inf, ymax = Inf, alpha=0.2, fill="skyblue")+ #YD
+  annotate("rect", xmin = 5900 ,xmax = 7800 ,ymin = -Inf, ymax = Inf, alpha=0.2, fill="goldenrod1")+ #HTM1
+  annotate("rect", xmin = 8800 ,xmax = 9800 ,ymin = -Inf, ymax = Inf, alpha=0.2, fill="goldenrod1")+ #HTM2
+  annotate("rect", xmin =  4588.20471 ,xmax = 3453.02185 ,ymin = -Inf, ymax = Inf, alpha=0.2,
+           fill="darkolivegreen")+ #AI1 potentially Neolithical impact
+  annotate("rect", xmin =  1300 ,xmax = 2300 ,ymin = -Inf, ymax = Inf, alpha=0.2, fill="darkolivegreen")+ 
+  #AI2 Roman period 
+  annotate("rect", xmin =  -40 ,xmax = 100 ,ymin = -Inf, ymax = Inf, alpha=0.2, fill="darkolivegreen")+ 
+  #AI4 modern eutrophication
+  geom_segment(mapping= aes(x = 12305, y = -Inf, xend = 12325, yend =Inf), color= "paleturquoise3")+ #Chara
+  geom_segment(mapping= aes(x = 12450, y = -Inf, xend = 12470, yend =Inf), color= "paleturquoise3")+ #Chara
+  geom_segment(mapping= aes(x = 12670, y = -Inf, xend = 12690, yend =Inf), color= "paleturquoise3")+ #Chara
+  geom_line(data=ROT21_Phytosterols1[!is.na(ROT21_Phytosterols1$value),],aes(x = age_BP_1950, 
+                                                                             y = log(value,10),color=variable),
+            linewidth=1.3, alpha=0.9) +    
+  geom_vline(xintercept=1182.598, color = "slategray", linetype="dashed", linewidth=0.75)+
+  geom_vline(xintercept=6983.277, color = "slategray", linetype="dashed", linewidth=0.75)+
+  geom_vline(xintercept=9849.213, color = "slategray", linetype="dashed", linewidth=0.75)+
+  geom_vline(xintercept=12001.65, color = "slategray", linetype="dashed", linewidth=0.75)+
+  scale_color_manual(labels= c(Brassicasterol_ug_gTOC = "Brassicasterol",
+                               Campesterol_plus_x_ug_gTOC = "Campesterol"),
+                     values= c("Brassicasterol_ug_gTOC" = "#993366",
+                               "Campesterol_plus_x_ug_gTOC" = "tan"))+
+  scale_x_continuous(limits = c(-71, 13000), breaks = seq( 2000, 12000, by = 2000), expand=c(0.005,0.005))+
+  #put the y axis labes on the opposite side so when its flipped it will appear at top
+  scale_y_continuous(position="right", expand=0.025, limits=c(log(15,10), log(600, 10)))+
+  xlab("cal years BP") + ylab(expression(atop(""~log*""['10']*"+1"~(mu*g~'/g'['TOC']))))+ 
+  theme(axis.line = element_line(colour = "black"), 
+        panel.background = element_blank(),
+        #legend.title = element_blank(),
+        axis.title.x = element_blank(),
+        axis.title.y = element_text(size=30,color="black"),
+        axis.line.x =element_blank(),
+        axis.text.y = element_text(size=30,color="black"),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        #legend.position=c(0.175, -0.05),
+        legend.position= "right",
+        legend.key = element_blank(),
+        legend.title = element_blank(),
+        legend.text = element_text(size=25, color="black"),
+        legend.key.spacing.y = unit(0.5, 'cm'),
+        legend.box.spacing = unit(1, 'cm'),
+        plot.margin = unit(c(0,0,0,0), "cm"))+
+  guides(color=guide_legend(ncol=1, byrow=TRUE, override.aes = list(linewidth = 2.5)))
+
+
+
+pPhytosterols2 <- ggplot() +
+  annotate("rect", xmin = 11700 ,xmax = 12900 ,ymin = -Inf, ymax = Inf, alpha=0.2, fill="skyblue")+ #YD
+  annotate("rect", xmin = 5900 ,xmax = 7800 ,ymin = -Inf, ymax = Inf, alpha=0.2, fill="goldenrod1")+ #HTM1
+  annotate("rect", xmin = 8800 ,xmax = 9800 ,ymin = -Inf, ymax = Inf, alpha=0.2, fill="goldenrod1")+ #HTM2
+  annotate("rect", xmin =  4588.20471 ,xmax = 3453.02185 ,ymin = -Inf, ymax = Inf, alpha=0.2,
+           fill="darkolivegreen")+ #AI1 potentially Neolithical impact
+  annotate("rect", xmin =  1300 ,xmax = 2300 ,ymin = -Inf, ymax = Inf, alpha=0.2, fill="darkolivegreen")+ 
+  #AI2 Roman period 
+  annotate("rect", xmin =  -40 ,xmax = 100 ,ymin = -Inf, ymax = Inf, alpha=0.2, fill="darkolivegreen")+ 
+  #AI4 modern eutrophication
+  geom_segment(mapping= aes(x = 12305, y = -Inf, xend = 12325, yend =Inf), color= "paleturquoise3")+ #Chara
+  geom_segment(mapping= aes(x = 12450, y = -Inf, xend = 12470, yend =Inf), color= "paleturquoise3")+ #Chara
+  geom_segment(mapping= aes(x = 12670, y = -Inf, xend = 12690, yend =Inf), color= "paleturquoise3")+ #Chara
+  geom_vline(xintercept=1182.598, color = "slategray", linetype="dashed", linewidth=0.75)+
+  geom_vline(xintercept=6983.277, color = "slategray", linetype="dashed", linewidth=0.75)+
+  geom_vline(xintercept=9849.213, color = "slategray", linetype="dashed", linewidth=0.75)+
+  geom_vline(xintercept=12001.65, color = "slategray", linetype="dashed", linewidth=0.75)+
+  geom_line(data=ROT21_Phytosterols2[!is.na(ROT21_Phytosterols2$value),],aes(x = age_BP_1950, y = log(value,10),color=variable), linewidth=1.3, alpha=0.9) +    
+  scale_color_manual(labels= c(Sitostanol_ug_gTOC = "Sitostanol",
+                               Stigmasterol_ug_gTOC = "Stigmasterol"),
+                     values= c("Sitostanol_ug_gTOC" = "cadetblue",
+                               "Stigmasterol_ug_gTOC" = "tan2"))+
+  scale_x_continuous(limits = c(-71, 13000), breaks = seq(0, 12000, by = 2000), expand=c(0.005,0.005))+
+  scale_y_continuous(position="left", expand=0.025, limits=c(log(15,10), log(600, 10)))+ 
+  xlab(expression (atop("", "cal years BP"))) + ylab(expression(atop(""~log*""['10']*"+1"~(mu*g~'/g'['TOC']))))+ 
+  theme(axis.line = element_line(colour = "black"), 
+        panel.background = element_blank(),
+        #legend.title = element_blank(),
+        axis.title.x = element_text(size=30,color="black"),
+        axis.title.y = element_text(size=30,color="black"),
+        axis.line.x =element_line(colour = "black"), 
+        axis.text.x = element_text(size=30,color="black"),
+        axis.text.y = element_text(size=30,color="black"),
+        #legend.position=c(0.175, -0.05),
+        legend.position= "right",
+        legend.key = element_blank(),
+        legend.title = element_blank(),
+        legend.text = element_text(size=25, color="black"),
+        legend.key.spacing.y = unit(0.5, 'cm'),
+        legend.box.spacing = unit(1, 'cm'),
+        plot.margin = unit(c(0,0,0,0), "cm"))+
+  guides(color=guide_legend(ncol=1, byrow=TRUE, override.aes = list(linewidth = 2.5)))
+
+
+#landscape 17.5x17.5
+
+
+#plot PSI with GAM fitted trend
+
+
+ROT21_PSI_9A <-ROT21_PSI %>% dplyr::filter(ROT21_PSI$sample %in% c("9_A_78-80_EDGE","9_A_88-90_EDGE", "9_A_98-100_EDGE"))
+
+
+pPSI <- ggplot() +
+  annotate("rect", xmin = 11700 ,xmax = 12900 ,ymin = -Inf, ymax = Inf, alpha=0.2, fill="skyblue")+ #YD
+  annotate("rect", xmin = 5900 ,xmax = 7800 ,ymin = -Inf, ymax = Inf, alpha=0.2, fill="goldenrod1")+ #HTM1
+  annotate("rect", xmin = 8800 ,xmax = 9800 ,ymin = -Inf, ymax = Inf, alpha=0.2, fill="goldenrod1")+ #HTM2
+  annotate("rect", xmin =  4588.20471 ,xmax = 3453.02185 ,ymin = -Inf, ymax = Inf, alpha=0.2,
+           fill="darkolivegreen")+ #AI1 potentially Neolithical impact
+  annotate("rect", xmin =  1300 ,xmax = 2300 ,ymin = -Inf, ymax = Inf, alpha=0.2, fill="darkolivegreen")+ 
+  #AI2 Roman period 
+  annotate("rect", xmin =  -40 ,xmax = 100 ,ymin = -Inf, ymax = Inf, alpha=0.2, fill="darkolivegreen")+ 
+  #AI4 modern eutrophication
+  geom_segment(mapping= aes(x = 12305, y = -Inf, xend = 12325, yend =Inf), color= "paleturquoise3")+ #Chara
+  geom_segment(mapping= aes(x = 12450, y = -Inf, xend = 12470, yend =Inf), color= "paleturquoise3")+ #Chara
+  geom_segment(mapping= aes(x = 12670, y = -Inf, xend = 12690, yend =Inf), color= "paleturquoise3")+ #Chara
+  geom_vline(xintercept=1182.598, color = "slategray", linetype="dashed", linewidth=0.75)+
+  geom_vline(xintercept=6983.277, color = "slategray", linetype="dashed", linewidth=0.75)+
+  geom_vline(xintercept=9849.213, color = "slategray", linetype="dashed", linewidth=0.75)+
+  geom_vline(xintercept=12001.65, color = "slategray", linetype="dashed", linewidth=0.75)+
+  geom_point(data =ROT21_PSI, aes(x = age_BP_1950, y = PSI_ROT21_eq), color= "turquoise4", shape=1, size=4,
+             stroke= 1.5) +
+  geom_ribbon(data = GAM_ci_phytol.sterol.ratio, aes(ymin = .lower_ci, ymax = .upper_ci, x = age_BP_1950), 
+              alpha = 0.35, fill="paleturquoise3") + 
+  geom_line(data = GAM_ci_phytol.sterol.ratio, aes(y = .fitted, x = age_BP_1950),color= "turquoise4", 
+            linewidth= 1.35) +
+  geom_line(data = GAM_signif_phytol.sterol.ratio, aes(y = signif, x = age_BP_1950), linewidth = 4.35, 
+            color= "turquoise4") +
+  geom_point(data = ROT21_PSI_9A, aes(x = age_BP_1950, y = PSI_ROT21_eq), color= "firebrick", shape=1, 
+             size=4, stroke= 1.5) +
+  scale_x_continuous(limits = c(-71, 13000), breaks = seq( 0, 12000, by = 2000), expand= c(0.005,0.005))+  
+  scale_y_continuous(position="left", limits=c(0.1,0.9),breaks = seq(0.2, 0.8, by = .2))+
+  xlab(expression(atop("", "cal years BP"))) + ylab(expression(atop("PSI")))+
+  theme(axis.line = element_line(colour = "black"), 
+        panel.background = element_blank(),
+        axis.text.x = element_text(size=30,color="black"),
+        axis.text.y = element_text(size=30,color="black"),
+        axis.title.x = element_text(size=30,color="black"),
+        axis.title.y = element_text(size=30,color="black"),
+        legend.position='none',
+        plot.margin = unit(c(0.45,0,0,0), "cm"))
+
+
+Fig2 <- plot_grid(pdend,pPhytol_woAge, pPhytosterols1, pPhytosterols2, pPSI, nrow=5, axis="rl", align="v", 
+          rel_heights =c(0.5,1, 1, 1.245,1.285))
+
+```
+
+# Fig. 2
+
+```{r, fig.width = 17.5, fig.height = 25, echo=FALSE}
+
+plot(Fig2)
+
+```

@@ -1,0 +1,223 @@
+---
+title: "ROT21 d2H Lipids"
+author: "Antonia Klatt"
+date: "2026-03-26"
+output: html_document
+---
+
+```{r}
+knitr::opts_chunk$set(echo = TRUE)
+
+#Load R packages 
+
+library(readr)
+library(ggplot2)
+library(cowplot)
+library(grid)
+library(gridExtra)
+library(reshape2)
+library(dplyr)
+library(patchwork)
+library(caret)
+
+#Import d2H data
+
+ROT21_d2H <- read.csv("C:\\Users\\klatt0000\\Desktop\\Basel AG Ladd\\PhD project\\PhD thesis\\Chapter 3 ROT21\\C3_Rscripts\\R_markdown\\Ch3_data_forR\\ROT21_d2H_Lipids.csv", header = TRUE , sep = "," , stringsAsFactors = FALSE, na.strings = "#NV")
+
+##note: d2H C25 n-alkane data are from Santos et al. (2026)
+##https://doi.org/10.1029/2025PA005401
+
+#plotting d2H data
+
+pd2HC16 <- ggplot() +
+  annotate("rect", xmin = 11700 ,xmax = 12900 ,ymin = -Inf, ymax = Inf, alpha=0.2, fill="skyblue")+ #YD
+  annotate("rect", xmin = 5900 ,xmax = 7800 ,ymin = -Inf, ymax = Inf, alpha=0.2, fill="goldenrod1")+ #HTM1
+  annotate("rect", xmin = 8800 ,xmax = 9800 ,ymin = -Inf, ymax = Inf, alpha=0.2, fill="goldenrod1")+ #HTM2
+  annotate("rect", xmin =  4588.20471 ,xmax = 3453.02185 ,ymin = -Inf, ymax = Inf, alpha=0.2,
+           fill="darkolivegreen")+ #AI1 potentially Neolithical impact
+  annotate("rect", xmin =  1300 ,xmax = 2300 ,ymin = -Inf, ymax = Inf, alpha=0.2, fill="darkolivegreen")+ 
+  #AI2 Roman period 
+  annotate("rect", xmin =  -40 ,xmax = 100 ,ymin = -Inf, ymax = Inf, alpha=0.2, fill="darkolivegreen")+ 
+  #AI4 modern eutrophication
+  geom_segment(mapping= aes(x = 12305, y = -Inf, xend = 12325, yend =Inf), color= "paleturquoise3")+ #Chara
+  geom_segment(mapping= aes(x = 12450, y = -Inf, xend = 12470, yend =Inf), color= "paleturquoise3")+ #Chara
+  geom_segment(mapping= aes(x = 12670, y = -Inf, xend = 12690, yend =Inf), color= "paleturquoise3")+ #Chara
+  geom_errorbar(data= ROT21_d2H[!is.na(ROT21_d2H),],
+                aes(x=age_BP_1950, ymin=C16.0.Avg.d2H.VSMOW-as.numeric(C16.0.SD.d2H.VSMOW), 
+                    ymax=C16.0.Avg.d2H.VSMOW+as.numeric(C16.0.SD.d2H.VSMOW)), color="mediumorchid4", width=300,
+                linewidth=1.5, alpha=0.5)+
+  geom_line(data= ROT21_d2H[!is.na(ROT21_d2H$C16.0.Avg.d2H.VSMOW),], 
+            aes(x = age_BP_1950, y = C16.0.Avg.d2H.VSMOW), color= "mediumorchid4", linewidth=1.5) +
+  scale_x_continuous(limits = c(-100, 13000), breaks = seq( 0, 12000, by = 2000), expand=c(0,0))+
+  scale_y_continuous(position="left", limits= c(-275,-155), breaks= seq(-260,-150, by=30))+ #130
+  xlab(NULL) + ylab(expression(delta^2*H['C16:0 Acid']))+ 
+  theme(axis.line.y = element_line(colour = "mediumorchid4"), 
+        axis.ticks.y = element_line(colour = "mediumorchid4"), 
+        panel.background = element_rect(fill = NA, color = NA),
+        plot.background  = element_rect(fill = NA, color = NA),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        legend.position = "none",
+        axis.text.y = element_text(size=37.5,color="mediumorchid4"),
+        #axis.text.y = element_blank(),
+        axis.title.y = element_text(size=37.5,color="mediumorchid4"),
+        axis.title.x = element_blank(),
+        axis.line.x =element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text.x = element_blank(),
+        plot.margin = unit(c(1.5,0.15,-3.5,0.15), "cm")) 
+
+pd2HPhytol <- ggplot() +
+  geom_errorbar(data= ROT21_d2H[!is.na(ROT21_d2H),],
+                aes(x=age_BP_1950, ymin=phytol.Avg.d2H.VSMOW-as.numeric(phytol.SD.d2H.VSMOW), 
+                    ymax=phytol.Avg.d2H.VSMOW+as.numeric(phytol.SD.d2H.VSMOW)), color="aquamarine4", width=300,
+                linewidth=1.5, alpha=0.5)+
+  geom_line(data= ROT21_d2H[!is.na(ROT21_d2H$phytol.Avg.d2H.VSMOW),], 
+            aes(x = age_BP_1950, y = phytol.Avg.d2H.VSMOW), color= "aquamarine4", linewidth=1.5) +
+  scale_x_continuous(limits = c(-100, 13000), breaks = seq( 0, 12000, by = 2000), expand=c(0,0))+
+  scale_y_continuous(position="right", limits= c(-420,-300), breaks= seq(-415,-315, by=30) )+ 
+  xlab(expression(atop("", "cal years BP"))) + ylab(expression(delta^2*H['Phytol']))+ 
+  theme(axis.line = element_line(colour = "aquamarine4"), 
+        axis.ticks = element_line(colour = "aquamarine4"), 
+         panel.background = element_rect(fill = NA, color = NA),
+        plot.background  = element_rect(fill = NA, color = NA),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        legend.position = "none",
+        axis.text.y = element_text(size=37.5,color="aquamarine4"),
+        #axis.text.y = element_blank(),
+        axis.title.y = element_text(size=37.5,color="aquamarine4"),
+        axis.title.x = element_blank(),
+        axis.line.x =element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text.x = element_blank(),
+        plot.margin = unit(c(-3.5,0.5,-3.5,0.5), "cm"))
+
+
+#d2H C25 Alkane (Santos et al., 2026)
+
+pd2HC25<- ggplot() +
+  geom_errorbar(data= ROT21_d2H[!is.na(ROT21_d2H),],
+                aes(x=age_BP_1950, ymin=C25_n.alk_d2H_10.V-C25_StdDev.of.d2H.VSMOW2_10.V, 
+                    ymax=C25_n.alk_d2H_10.V+C25_StdDev.of.d2H.VSMOW2_10.V), color="#9ACAD0", width=300,
+                linewidth=1.5, alpha=0.5)+
+  geom_line(data= ROT21_d2H[!is.na(ROT21_d2H$C25_n.alk_d2H_10.V),], 
+            aes(x = age_BP_1950, y = C25_n.alk_d2H_10.V), color= "#9ACAD0", linewidth=1.5) +
+  scale_x_continuous(limits = c(-100, 13000), breaks = seq( 0, 12000, by = 2000), expand=c(0,0))+
+  scale_y_continuous(position="left", limits= c(-250,-130), breaks= seq(-240,-130, by=30) )+
+  xlab(expression(atop("", 'cal years BP'))) + ylab(expression(delta^2*H['C25 Alkane']))+ 
+  theme(axis.line.y = element_line(colour = "#9ACAD0"), 
+        axis.ticks.y = element_line(colour = "#9ACAD0"), 
+        axis.line.x = element_line(colour = "black"), 
+        axis.ticks.x = element_line(colour = "black"), 
+        panel.background = element_rect(fill = NA, color = NA),
+        plot.background  = element_rect(fill = NA, color = NA),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.text.x = element_text(size=37.5,color="black"),
+        axis.title.x = element_text(size=37.5,color="black"),
+        #axis.text.y = element_blank(),
+        axis.title.y = element_text(size=37.5,color="#9ACAD0"),
+        axis.text.y = element_text(size=37.5,color="#9ACAD0"),
+        legend.position='none',
+        plot.margin = unit(c(-3.5,0.15,0.75,0.15), "cm"))
+#legend.text = element_text(size=55))
+
+
+pd2H <- plot_grid(pd2HC16, pd2HPhytol,pd2HC25,  nrow=3, axis="rl", align="v", 
+                  rel_heights =c(1.095, 0.775, 1.2615))
+
+#fractionation factors
+
+pepsC16_Phytol <-ggplot() +
+  annotate("rect", xmin = 11700 ,xmax = 12900 ,ymin = -Inf, ymax = Inf, alpha=0.2, fill="skyblue")+ #YD
+  annotate("rect", xmin = 5900 ,xmax = 7800 ,ymin = -Inf, ymax = Inf, alpha=0.2, fill="goldenrod1")+ #HTM1
+  annotate("rect", xmin = 8800 ,xmax = 9800 ,ymin = -Inf, ymax = Inf, alpha=0.2, fill="goldenrod1")+ #HTM2
+  annotate("rect", xmin =  4588.20471 ,xmax = 3453.02185 ,ymin = -Inf, ymax = Inf, alpha=0.2,
+           fill="darkolivegreen")+ #AI1 potentially Neolithical impact
+  annotate("rect", xmin =  1300 ,xmax = 2300 ,ymin = -Inf, ymax = Inf, alpha=0.2, fill="darkolivegreen")+ 
+  #AI2 Roman period 
+  annotate("rect", xmin =  -40 ,xmax = 100 ,ymin = -Inf, ymax = Inf, alpha=0.2, fill="darkolivegreen")+ 
+  #AI4 modern eutrophication
+  geom_segment(mapping= aes(x = 12305, y = -Inf, xend = 12325, yend =Inf), color= "paleturquoise3")+ #Chara
+  geom_segment(mapping= aes(x = 12450, y = -Inf, xend = 12470, yend =Inf), color= "paleturquoise3")+ #Chara
+  geom_segment(mapping= aes(x = 12670, y = -Inf, xend = 12690, yend =Inf), color= "paleturquoise3")+ #Chara
+  geom_line(data= ROT21_d2H[!is.na(ROT21_d2H$epsilon_C16.0.phytol),], 
+            aes(x = age_BP_1950, y = epsilon_C16.0.phytol), color= "mediumorchid4", linewidth=1.5) +  
+  scale_x_continuous(limits = c(-100, 13000), breaks = seq( 0, 12000, by = 2000), expand=c(0,0))+
+  scale_y_continuous(position="left", limits=c(140,320))+
+  xlab(expression(atop("", "cal years BP")))  + ylab(expression(delta^2*H['C16:0 Acid'/'Phytol']))+ 
+  theme(axis.line.y = element_line(colour = "mediumorchid4"), 
+        axis.ticks.y = element_line(colour = "mediumorchid4"), 
+        panel.background = element_rect(fill = NA, color = NA),
+        plot.background  = element_rect(fill = NA, color = NA),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        legend.position = "none",
+        axis.text.y = element_text(size=37.5,color="mediumorchid4"),
+        #axis.text.y = element_blank(),
+        axis.title.y = element_text(size=37.5,color="mediumorchid4"),
+        axis.title.x = element_blank(),
+        axis.line.x =element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text.x = element_blank(),
+        plot.margin = unit(c(1.5,0.15,-3.5,0.15), "cm")) 
+
+pepsC16_C25 <- ggplot() +
+  geom_line(data= ROT21_d2H[!is.na(ROT21_d2H$epsilon_C16.0.C25Alk),], 
+            aes(x = age_BP_1950, y = epsilon_C16.0.C25Alk), color= "aquamarine4", linewidth=1.5) +
+  scale_x_continuous(limits = c(-100, 13000), breaks = seq( 0, 12000, by = 2000), expand=c(0,0))+
+  scale_y_continuous(position = "right", limits= c(-115,65), breaks= seq(-110,60, by=40))+
+  xlab(NULL) + ylab(expression(delta^2*H['C16:0 Acid'/'C25 Alkane']))+ 
+  theme(axis.line = element_line(colour = "aquamarine4"), 
+        axis.ticks = element_line(colour = "aquamarine4"), 
+        panel.background = element_rect(fill = NA, color = NA),
+        plot.background  = element_rect(fill = NA, color = NA),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        legend.position = "none",
+        axis.text.y = element_text(size=37.5,color="aquamarine4"),
+        axis.title.y = element_text(size=37.5,color="aquamarine4"),
+        axis.title.x = element_blank(),
+        axis.line.x =element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text.x = element_blank(),
+        plot.margin = unit(c(-3.5,0.5,-3.5,0.5), "cm"))
+
+pepsPhytol_C25 <-ggplot() +
+ geom_line(data= ROT21_d2H[!is.na(ROT21_d2H$epsilon_phytol.C25Alk),], 
+            aes(x = age_BP_1950, y = epsilon_phytol.C25Alk), color= "#9ACAD0", linewidth=1.5) +  
+  scale_x_continuous(limits = c(-100, 13000), breaks = seq( 0, 12000, by = 2000), expand=c(0,0))+
+  scale_y_continuous(position = "left", limits= c(-300,-120), breaks= seq(-290,-110, by=40))+ 
+  xlab(expression(atop("",'cal years BP'))) + ylab(expression(delta^2*H['Phytol'/'C25 Alkane']))+ 
+  theme(axis.line.y = element_line(colour = "#9ACAD0"), 
+        axis.ticks.y = element_line(colour = "#9ACAD0"), 
+        axis.line.x = element_line(colour = "black"), 
+        axis.ticks.x = element_line(colour = "black"), 
+        panel.background = element_rect(fill = NA, color = NA),
+        plot.background  = element_rect(fill = NA, color = NA),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.text.x = element_text(size=37.5,color="black"),
+        axis.title.x = element_text(size=37.5,color="black"),
+        axis.title.y = element_text(size=37.5,color="#9ACAD0"),
+        axis.text.y = element_text(size=37.5,color="#9ACAD0"),
+        legend.position='none',
+        plot.margin = unit(c(-3.5,0.15,0.75,0.15), "cm"))
+
+pd2HEps <- plot_grid(pepsC16_Phytol, pepsC16_C25, pepsPhytol_C25,  nrow=3, axis="rl", align="v", 
+                     rel_heights =c(1.095, 0.775, 1.2615))
+
+
+Fig3 <- plot_grid(pd2H, pd2HEps, ncol=2,  axis="tb", align="h",  rel_widths=c(1,1))
+
+
+```
+
+#Fig.3
+
+```{r, fig.width = 35, fig.height = 20, echo=FALSE}
+
+plot(Fig3)
+
+```

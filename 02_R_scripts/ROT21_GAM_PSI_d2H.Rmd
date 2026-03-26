@@ -1,0 +1,148 @@
+---
+title: "ROT21 PSI d2H C16.0 Acid/Phytol GAMs"
+author: "Antonia Klatt"
+date: "2026-03-25"
+output: html_document
+---
+
+This R code is adapted from Santos et al. (2024)
+https://doi.org/10.1016/j.quascirev.2024.108796
+
+
+```{r}
+knitr::opts_chunk$set(echo = TRUE)
+
+#Load R packages 
+
+library(mgcv)
+library(scam)
+library(gratia)
+library(ggplot2)
+library(cowplot)
+library(dplyr)
+
+#General comment for fitting GAMs (k number)
+
+#Simpson (2018) (https://doi.org/10.3389/fevo.2018.00149)
+
+#"Basis dimension (k) checking results. Low p-value (k-index<1) may indicate that k is too low, especially if edf is close to k".
+
+#import data
+
+#Phytol:sterol index (PSI)
+
+ROT21_PSI <- read.csv("C:\\Users\\klatt0000\\Desktop\\Basel AG Ladd\\PhD project\\PhD thesis\\Chapter 3 ROT21\\C3_Rscripts\\R_markdown\\Ch3_data_forR\\ROT21_phytol_sterol_index.csv", header = TRUE , sep = "," , stringsAsFactors = FALSE, na.strings = "#NV")
+
+#d2H data 
+
+ROT21_d2H <- read.csv("C:\\Users\\klatt0000\\Desktop\\Basel AG Ladd\\PhD project\\PhD thesis\\Chapter 3 ROT21\\C3_Rscripts\\R_markdown\\Ch3_data_forR\\ROT21_d2H_Lipids.csv", header = TRUE , sep = "," , stringsAsFactors = FALSE, na.strings = "#NV")
+
+```
+
+## Create GAM fit for PSI values
+
+```{r}
+
+#initially testing differet k numbers, starting with values significantly below half of sample number, increase when k is <1 and p-value is really small
+
+PSI_reml <- gam(PSI_ROT21_eq ~ s(age_BP_1950, k = 20), data = ROT21_PSI,
+               method = "REML")
+
+summary(PSI_reml)
+
+gam.check(PSI_reml)
+
+
+appraise(PSI_reml, method = "simulate")
+
+k.check(PSI_reml)
+
+
+PSI_ds <- data_slice(PSI_reml, age_BP_1950 = evenly(age_BP_1950, 200)) #criamos 200 pontos para serem usados no plot
+
+fv_PSI_ds <- fitted_values(PSI_reml,data = PSI_ds)
+
+#getting significant changes during periods when confint of 1st derivative is =/= 0
+
+dt_PSI <- derivatives(PSI_reml, data = PSI_ds) %>%
+  tibble::add_column(PSI_fitted = fv_PSI_ds$.fitted) %>%
+  mutate(signif = if_else(.lower_ci < 0 & .upper_ci > 0, NA_real_, PSI_fitted))
+
+#test plot
+
+ggplot() +
+  geom_line(data = ROT21_PSI[!is.na(ROT21_PSI$PSI_ROT21_eq),], aes(x = age_BP_1950, y = PSI_ROT21_eq)) +
+  geom_point(data = ROT21_PSI, aes(x = age_BP_1950, y = PSI_ROT21_eq)) +
+  geom_ribbon(data = fv_PSI_ds, aes(ymin = .lower_ci, ymax = .upper_ci, x = age_BP_1950), alpha = 0.2) +
+  geom_line(data = fv_PSI_ds, aes(y = .fitted, x = age_BP_1950)) +
+  geom_line(data = dt_PSI, aes(y = signif, x = age_BP_1950), linewidth = 2) +
+  xlab(expression(paste("cal years BP"))) +
+  ylab(expression(paste("PSI"))) +
+  labs(title = "GAM fit PSI")+
+  theme_bw() + 
+  theme(panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank())
+
+#export PSI GAM fits
+
+#write.csv(fv_PSI_ds, "fv_PSI_ds_260325.csv")
+
+#write.csv(dt_PSI, "dt_PSI_260325.csv")
+
+```
+
+## Create GAM fit for d2H C16:0 Acid/Phytol values
+
+```{r}
+
+#d2H C16:0/phytol 
+
+#with scat function
+
+d2H_C16_phytol_reml <- gam(epsilon_C16.0.phytol ~ s(age_BP_1950, k = 20), data = ROT21_d2H,
+                           method = "REML", family = scat())
+
+summary(d2H_C16_phytol_reml)
+
+gam.check(d2H_C16_phytol_reml) #increasing or decreasing k is not increasing p-value
+
+appraise(d2H_C16_phytol_reml, method = "simulate")
+
+k.check(d2H_C16_phytol_reml)
+
+
+d2H_ds <- data_slice(d2H_C16_phytol_reml, age_BP_1950 = evenly(age_BP_1950, 200)) #criamos 200 pontos para serem usados no plot
+
+
+fv_d2H_ds <- fitted_values(d2H_C16_phytol_reml,data = d2H_ds)
+
+#getting significant changes during periods when confint of 1st derivative is =/= 0
+
+dt_d2H <- derivatives(d2H_C16_phytol_reml, data = d2H_ds) %>%
+  tibble::add_column(d2H_fitted = fv_d2H_ds$.fitted) %>%
+  mutate(signif = if_else(.lower_ci < 0 & .upper_ci > 0, NA_real_, d2H_fitted))
+
+#test plot
+
+ggplot() +
+  geom_line(data = ROT21_d2H[!is.na(ROT21_d2H$epsilon_C16.0.phytol),], 
+            aes(x = age_BP_1950, y = epsilon_C16.0.phytol)) +
+  geom_point(data = ROT21_d2H, aes(x = age_BP_1950, y = epsilon_C16.0.phytol)) +
+  geom_ribbon(data = fv_d2H_ds, aes(ymin = .lower_ci, ymax = .upper_ci, x = age_BP_1950), alpha = 0.2) +
+  geom_line(data = fv_d2H_ds, aes(y = .fitted, x = age_BP_1950)) +
+  geom_line(data = dt_d2H, aes(y = signif, x = age_BP_1950), linewidth = 2) +
+  xlab(expression(paste("cal years BP"))) +
+  ylab(expression(paste("d2H C16.0 phytol"))) +
+  labs(title = "GAM fit d2H C16:0/phytol")+
+  theme_bw() + 
+  theme(panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank())
+
+
+#export d2H GAM fits
+
+#write.csv(fv_d2H_ds, "fv_d2H_ds_260325.csv")
+
+#write.csv(dt_d2H, "dt_d2H_260325.csv")
+
+```

@@ -1,0 +1,120 @@
+---
+title: "ROT21 N F3 plus Fatty acids NMDS"
+author: "Antonia Klatt"
+date: "2026-03-26"
+output: html_document
+---
+
+```{r}
+knitr::opts_chunk$set(echo = TRUE)
+
+#Load R packages
+
+library(readr)
+library(ggplot2)
+library(gridExtra)
+library(grid)
+library(cowplot)
+library(vegan)
+library(dplyr)
+library(patchwork)
+library(ggrepel)
+
+
+#Import relative lipid concentrations (N F3 plus Fatty acids) 
+
+
+ROT21_F3_FA_rel_conc <- read.csv("C:\\Users\\klatt0000\\Desktop\\Basel AG Ladd\\PhD project\\PhD thesis\\Chapter 3 ROT21\\C3_Rscripts\\R_markdown\\Ch3_data_forR\\ROT21_N_F3_FA_rel_conc.csv", row.names=1, 
+                              header = TRUE , sep = "," , stringsAsFactors = FALSE, na.strings = "#NV")
+
+#exclude rows with NA values for NMDS
+
+ROT21_F3_FA.woNA <- na.omit(ROT21_F3_FA_rel_conc[,2:44])
+
+meta.ROT21.F3_FA <-metaMDS(ROT21_F3_FA.woNA, k=3, autotransform= FALSE, try= 100, trymax= 100, 
+                            distance = "bray") #stress 0.0.096
+stressplot(meta.ROT21.F3_FA)
+
+
+NMDS_ROT21_rel_F3_FA_sample <- as.data.frame(scores(meta.ROT21.F3_FA, "sites")) #sites is the same as the sample 
+
+NMDS_ROT21_rel_F3_FA_species <- as.data.frame(scores(meta.ROT21.F3_FA, "species")) #species is sterols
+
+#re-order species for better plot visualization (layer order)
+
+c1 <- seq(from=3, to=25, by=1)
+c2 <-seq(from=26, to=43, by=1)
+
+NMDS_ROT21_rel_F3_FA_species$number <- c(1,c1,2,c2 )
+
+NMDS_ROT21_rel_F3_FA_species.ord <- NMDS_ROT21_rel_F3_FA_species[order(NMDS_ROT21_rel_F3_FA_species$number, 
+                                                                       decreasing = FALSE),] 
+
+#subset for plotting
+
+NMDS_ROT21_rel_F3_FA_species.ord1 <- NMDS_ROT21_rel_F3_FA_species.ord[1:2,]
+
+NMDS_ROT21_rel_F3_FA_species.ord2 <- NMDS_ROT21_rel_F3_FA_species.ord[3:43,]
+
+
+FigS4 <- ggplot() + 
+  ggtitle(expression(atop("ROT21 stress: 0.096")))+
+  geom_hline(yintercept=0, color = "gray60", linetype="dashed", linewidth=0.7)+
+  geom_vline(xintercept=0, color = "gray60", linetype="dashed", linewidth=0.7)+
+  geom_text_repel(data=NMDS_ROT21_rel_F3_FA_species.ord2,aes(x=NMDS1,y=NMDS2, label= c("cholesterol",
+                                                                                "cholestanol",
+                                                                                "brassicasterol",
+                                                                                "campesterol & x", 
+                                                                                "campestanol & x",
+                                                                                "stigmasterol", 
+                                                                                 "alcohol m/z 486", 
+                                                                                "fungisterol", 
+                                                                                "sitosterol & x",
+                                                                                "chondrillasterol",
+                                                                                "sitostanol", 'b-amyrin',
+                                                                                "C30 sterol m/z 498", 
+                                                                                "a-amyrin & lupeol & 
+                                                                                22-dihydrochondrillasterol",
+                                                                                "triterpenoid m/z 371 & x", 
+                                                                                "dinostanol & x",
+                                                                                "lanosterol?", "friedelin & x",
+                                                                                "tetrahymanol", "diplopterol", 
+                                                                                "C13:0", "C14:0", "C15:0", 
+                                                                                "C17:0", "C18:0", "C20:0", 
+                                                                                "C21:0", "C22:0", "C23:0", 
+                                                                                "C24:0", "C25:0",
+                                                                                "C26:0", "C27:0", "C28:0", 
+                                                                                "C29:0", "C30:0", "C31:0 & x", 
+                                                                                "C32:0 & x",
+                                                                                "C33:0 & x", "C34:0", 
+                                                                                "C36:0")), alpha=0.85, 
+                                                                                color=c("lightsteelblue"), 
+                  size= 9.5, max.overlaps=100)+
+  geom_text(data=NMDS_ROT21_rel_F3_FA_species.ord1,aes(x=NMDS1,y=NMDS2), 
+            label= c("phytol", "C16:0"), color="black", fontface= 'bold', size= 9.5)+
+  ylim(-0.5, 0.5)+ xlim(-0.5,0.75)+ 
+  xlab(expression(atop("","NMDS1")))+ylab("NMDS2")+
+  theme(axis.line = element_line(colour = "black"), 
+        panel.background = element_blank(),
+        plot.title = element_text(size=30, face="bold"),
+        legend.title=element_blank(),
+        legend.key=element_blank(),
+        legend.key.spacing.y = unit(0.5, 'cm'),
+        legend.position = "none",
+        axis.text.x = element_text(size=30, color= "black"),
+        axis.text.y = element_text(size=30, color= "black"),
+        axis.title.x = element_text(size = 30 ),
+        axis.title.y = element_text(size = 30),
+        axis.ticks = element_blank(),
+        panel.border = element_rect(colour = "black", fill=NA, linewidth=0.75),
+        plot.margin = unit(c(1,1,0.5,0.5), "cm"))
+
+```
+
+#Fig.S4
+
+```{r, fig.width = 17.5, fig.height = 17.5, echo=FALSE}
+
+plot(FigS4)
+
+```

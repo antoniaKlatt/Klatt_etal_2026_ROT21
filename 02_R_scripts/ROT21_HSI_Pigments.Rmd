@@ -1,0 +1,190 @@
+---
+title: "ROT21 HSI pigments"
+author: "Antonia Klatt"
+date: "2026-03-26"
+output: html_document
+---
+
+```{r}
+knitr::opts_chunk$set(echo = TRUE)
+
+#Load R packages
+
+library(ggplot2)
+library(gridExtra)
+library(grid)
+library(cowplot)
+library(reshape2)
+library(patchwork)
+
+#Import HSI pigment data
+
+ROT21_HSI <- read.csv("C:\\Users\\klatt0000\\Desktop\\Basel AG Ladd\\PhD project\\PhD thesis\\Chapter 3 ROT21\\C3_Rscripts\\R_markdown\\Ch3_data_forR\\ROT21_HSI.csv", header = TRUE , sep = "," , stringsAsFactors = FALSE, na.strings = "#NV")
+
+#note for Relative Absorption Depths (RABD)
+
+#RABD_620 = phycocyanin
+#RABD_715 = bacteriopheophytin e
+#RABD_845 = bacteriopheophytin a
+
+#calculate mean RRABD as threshold to distinguish noise from true signal
+
+RABD620.mean <-mean(na.omit(ROT21_HSI$RABD_620))
+
+RABD715.mean <-mean(na.omit(ROT21_HSI$RABD_715))
+
+RABD845.mean <-mean(na.omit(ROT21_HSI$RABD_845))
+
+
+#plotting HSI scans
+
+#cyanobacteria phycocyanin
+
+pPhyco <- ggplot() +
+  #set up the asthetics, the line must be broken because this is technically discrete data
+  annotate("rect", xmin = 11700 ,xmax = 12900 ,ymin = -Inf, ymax = Inf, alpha=0.2, fill="skyblue")+ #YD
+  annotate("rect", xmin = 5900 ,xmax = 7800 ,ymin = -Inf, ymax = Inf, alpha=0.2, fill="goldenrod1")+ #HTM1
+  annotate("rect", xmin = 8800 ,xmax = 9800 ,ymin = -Inf, ymax = Inf, alpha=0.2, fill="goldenrod1")+ #HTM2
+  annotate("rect", xmin =  4588.20471 ,xmax = 3453.02185 ,ymin = -Inf, ymax = Inf, alpha=0.2,
+           fill="darkolivegreen")+ #AI1 potentially Neolithical impact
+  annotate("rect", xmin =  1300 ,xmax = 2300 ,ymin = -Inf, ymax = Inf, alpha=0.2, fill="darkolivegreen")+ 
+  #AI2 Roman period 
+  annotate("rect", xmin =  -40 ,xmax = 100 ,ymin = -Inf, ymax = Inf, alpha=0.2, fill="darkolivegreen")+ 
+  #AI4 modern eutrophication
+  geom_segment(mapping= aes(x = 12305, y = -Inf, xend = 12325, yend =Inf), color= "paleturquoise3")+ #Chara
+  geom_segment(mapping= aes(x = 12450, y = -Inf, xend = 12470, yend =Inf), color= "paleturquoise3")+ #Chara
+  geom_segment(mapping= aes(x = 12670, y = -Inf, xend = 12690, yend =Inf), color= "paleturquoise3")+ #Chara
+  geom_line(data= ROT21_HSI, aes(x = age_BP_1950, y =RABD_620), color= "#F7AFAF", linewidth=1.25) +
+  geom_hline(yintercept=RABD620.mean, color = "#F7AFAF", linetype="dashed", linewidth=1)+
+  scale_x_continuous(limits = c(-100, 13000), breaks = seq( 0, 12000, by = 2000), expand= c(0.005,0.005))+  
+  scale_y_continuous(position="left", limits= c(0.99,1.04), breaks= c(0.995,1.035))+
+  xlab(NULL) + ylab(expression(atop("phycocyanin")))+ #,"(RABD 620 nm)"
+  theme(axis.line.y = element_line(colour = "#F7AFAF"), 
+        axis.ticks.y = element_line(colour = "#F7AFAF"),  
+        panel.background = element_blank(),
+        legend.position = "none",
+        axis.text.y = element_text(size=27.5,color="#F7AFAF"),
+        axis.title.y = element_text(size=27.5,color="#F7AFAF"),
+        axis.title.x = element_blank(),
+        axis.line.x =element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text.x = element_blank(),
+        plot.margin = unit(c(1,0.5,0,0.5), "cm"))
+
+# green sulphur bacteria bacteriopheophytin e
+
+pbactPheoe <- ggplot() +
+  annotate("rect", xmin = 11700 ,xmax = 12900 ,ymin = -Inf, ymax = Inf, alpha=0.2, fill="skyblue")+ #YD
+  annotate("rect", xmin = 5900 ,xmax = 7800 ,ymin = -Inf, ymax = Inf, alpha=0.2, fill="goldenrod1")+ #HTM1
+  annotate("rect", xmin = 8800 ,xmax = 9800 ,ymin = -Inf, ymax = Inf, alpha=0.2, fill="goldenrod1")+ #HTM2
+  annotate("rect", xmin =  4588.20471 ,xmax = 3453.02185 ,ymin = -Inf, ymax = Inf, alpha=0.2, fill="darkolivegreen")+ #AI1 potentially Neolithical impact
+  annotate("rect", xmin =  1300 ,xmax = 2300 ,ymin = -Inf, ymax = Inf, alpha=0.2, fill="darkolivegreen")+ 
+  #AI2 Roman period 
+  annotate("rect", xmin =  -40 ,xmax = 100 ,ymin = -Inf, ymax = Inf, alpha=0.2, fill="darkolivegreen")+ 
+  #AI4 modern eutrophication
+  geom_segment(mapping= aes(x = 12305, y = -Inf, xend = 12325, yend =Inf), color= "paleturquoise3")+ #Chara
+  geom_segment(mapping= aes(x = 12450, y = -Inf, xend = 12470, yend =Inf), color= "paleturquoise3")+ #Chara
+  geom_segment(mapping= aes(x = 12670, y = -Inf, xend = 12690, yend =Inf), color= "paleturquoise3")+ #Chara
+  geom_line(data= ROT21_HSI, aes(x = age_BP_1950, y =RABD_715), color= "indianred3", linewidth=1.25) +
+  geom_hline(yintercept=RABD715.mean, color = "indianred3", linetype="dashed", linewidth=1)+
+  scale_x_continuous(limits = c(-100, 13000), breaks = seq( 0, 12000, by = 2000), expand= c(0.005,0.005))+  
+  scale_y_continuous(position="right", limits= c(0.97,1.02), breaks= c(0.975,1.015))+ 
+  xlab(NULL) + ylab(expression(atop("bacteriopheophytin e")))+ 
+  theme(axis.line.y = element_line(colour = "indianred3"), 
+        axis.ticks.y = element_line(colour = "indianred3"),  
+        panel.background = element_blank(),
+        legend.position = "none",
+        axis.text.y = element_text(size=27.5,color="indianred3"),
+        #axis.text.y = element_blank(),
+        axis.title.y = element_text(size=27.5,color="indianred3"),
+        axis.title.x = element_blank(),
+        axis.line.x =element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text.x = element_blank(),
+        plot.margin = unit(c(0,0.5,0,0.5), "cm"))
+
+
+#purple sulphur bacteria bacteriopheophytin a 
+
+pbactPheoa <- ggplot() +
+  annotate("rect", xmin = 11700 ,xmax = 12900 ,ymin = -Inf, ymax = Inf, alpha=0.2, fill="skyblue")+ #YD
+  annotate("rect", xmin = 5900 ,xmax = 7800 ,ymin = -Inf, ymax = Inf, alpha=0.2, fill="goldenrod1")+ #HTM1
+  annotate("rect", xmin = 8800 ,xmax = 9800 ,ymin = -Inf, ymax = Inf, alpha=0.2, fill="goldenrod1")+ #HTM2
+  annotate("rect", xmin =  4588.20471 ,xmax = 3453.02185 ,ymin = -Inf, ymax = Inf, alpha=0.2,
+           fill="darkolivegreen")+ #AI1 potentially Neolithical impact
+  annotate("rect", xmin =  1300 ,xmax = 2300 ,ymin = -Inf, ymax = Inf, alpha=0.2, fill="darkolivegreen")+
+  #AI2 Roman period 
+  annotate("rect", xmin =  -40 ,xmax = 100 ,ymin = -Inf, ymax = Inf, alpha=0.2, fill="darkolivegreen")+ 
+  #AI4 modern eutrophication
+  geom_segment(mapping= aes(x = 12305, y = -Inf, xend = 12325, yend =Inf), color= "paleturquoise3")+ #Chara
+  geom_segment(mapping= aes(x = 12450, y = -Inf, xend = 12470, yend =Inf), color= "paleturquoise3")+ #Chara
+  geom_segment(mapping= aes(x = 12670, y = -Inf, xend = 12690, yend =Inf), color= "paleturquoise3")+ #Chara
+  geom_line(data= ROT21_HSI, aes(x = age_BP_1950, y =RABD_845), color= "indianred4", linewidth=1.25) +
+  geom_hline(yintercept=RABD845.mean, color = "indianred4", linetype="dashed", linewidth=1)+
+  #reverse depth so it starts at zero
+  scale_x_continuous(limits = c(-100, 13000), breaks = seq( 0, 12000, by = 2000), expand= c(0.005,0.005))+  
+  scale_y_continuous(position="left", limits= c(0.995,1.046007), breaks= c(1,1.045))+
+  xlab(expression(atop("", "cal years BP")))  + ylab(expression(atop("bacteriopheophytin a")))+ 
+  theme(axis.line.x = element_line(colour = "black"), 
+        axis.line.y = element_line(colour = "indianred4"), 
+        axis.ticks.y = element_line(colour = "indianred4"), 
+        panel.background = element_blank(),
+        #legend.title = element_blank(),
+        axis.title.x = element_text(size=27.5,color="black"),
+        axis.title.y = element_text(size=27.5,color="indianred4"),
+        axis.text.y = element_text(size=27.5,color="indianred4"),
+        axis.text.x = element_text(size=27.5,color="black"),
+        plot.margin = unit(c(0,0.5,0.5,0.5), "cm"))
+
+Fig4A <- plot_grid(pPhyco, pbactPheoe, pbactPheoa, nrow=3, align= "v", axis= "rl", 
+          rel_heights = c(1.135,1.0425,1.335))
+
+```
+
+#Fig.4A
+
+```{r, fig.width = 15, fig.height = 15, echo=FALSE}
+
+plot(Fig4A)
+
+```
+
+```{r}
+
+#plotting green pigment concentrations
+
+Fig4B <- ggplot() +
+  annotate("rect", xmin = 11700 ,xmax = 12900 ,ymin = -Inf, ymax = Inf, alpha=0.2, fill="skyblue")+ #YD
+  annotate("rect", xmin = 5900 ,xmax = 7800 ,ymin = -Inf, ymax = Inf, alpha=0.2, fill="goldenrod1")+ #HTM1
+  annotate("rect", xmin = 8800 ,xmax = 9800 ,ymin = -Inf, ymax = Inf, alpha=0.2, fill="goldenrod1")+ #HTM2
+  annotate("rect", xmin =  4588.20471 ,xmax = 3453.02185 ,ymin = -Inf, ymax = Inf, alpha=0.2,
+           fill="darkolivegreen")+ #AI1 potentially Neolithical impact
+  annotate("rect", xmin =  1300 ,xmax = 2300 ,ymin = -Inf, ymax = Inf, alpha=0.2, fill="darkolivegreen")+ 
+  #AI2 Roman period 
+  annotate("rect", xmin =  -40 ,xmax = 100 ,ymin = -Inf, ymax = Inf, alpha=0.2, fill="darkolivegreen")+ 
+  #AI4 modern eutrophication
+  geom_segment(mapping= aes(x = 12305, y = -Inf, xend = 12325, yend =Inf), color= "paleturquoise3")+ #Chara
+  geom_segment(mapping= aes(x = 12450, y = -Inf, xend = 12470, yend =Inf), color= "paleturquoise3")+ #Chara
+  geom_segment(mapping= aes(x = 12670, y = -Inf, xend = 12690, yend =Inf), color= "paleturquoise3")+ #Chara
+  geom_line(data= ROT21_HSI, aes(x = age_BP_1950, y =TChl_ug_gTOC), color= "#009966", linewidth=1.25) +
+  scale_x_continuous(limits = c(-100, 13000), breaks = seq( 0, 12000, by = 2000), expand= c(0.005,0.005))+  
+  scale_y_continuous(position="left")+
+  xlab(expression(atop("", "cal years BP")))  + ylab(expression(atop('green pigments'~(mu*g~'/g'['TOC']))))+ 
+  theme(axis.line = element_line(colour = "black"), 
+        panel.background = element_blank(),
+        axis.text.x = element_text(size=27.5,color="black"),
+        axis.title.x = element_text(size=27.5,color="black"),
+        axis.title.y = element_text(size=27.5,color="black"),
+        axis.text.y = element_text(size=27.5,color="black"),
+        legend.position='none',
+        plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
+
+```
+
+#Fig.4B
+
+```{r, fig.width = 15, fig.height = 6.5, echo=FALSE}
+
+plot(Fig4B)
+
+```
