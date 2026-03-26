@@ -24,7 +24,7 @@ library(ggrepel)
 #Import relative lipid concentrations (N F3 plus Fatty acids) 
 
 
-ROT21_F3_FA_rel_conc <- read.csv("C:\\Users\\klatt0000\\Desktop\\Basel AG Ladd\\PhD project\\PhD thesis\\Chapter 3 ROT21\\C3_Rscripts\\R_markdown\\Ch3_data_forR\\ROT21_N_F3_FA_rel_conc.csv", row.names=1, 
+ROT21_F3_FA_rel_conc <- read.csv(here("01_Data","ROT21_N_F3_FA_rel_conc.csv"), row.names=1, 
                               header = TRUE , sep = "," , stringsAsFactors = FALSE, na.strings = "#NV")
 
 #exclude rows with NA values for NMDS
