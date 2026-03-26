@@ -10,7 +10,8 @@ In this study, we analyzed a 13 kyr record from Swiss lake Rotsee (ROT21) to ass
 
 This folder contains datasets from ROT21 as well as ROT09 used in this study.
 
-**NOTE**: All lipid data from ROT09 are from from Naeher et al. (2012) (https://doi.org/10.1016/j.orggeochem.2012.05.014); 
+**NOTE**: 
+All lipid data from ROT09 are from from Naeher et al. (2012) (https://doi.org/10.1016/j.orggeochem.2012.05.014); 
 ROT21 δ2H C25 *n*-alkane data are from Santos et al. (2026) (https://doi.org/10.1029/2025PA005401)
 
 ### 02_R_scripts
