@@ -4,7 +4,7 @@
 
 In this study, we analyzed a 13 kyr record from Swiss lake Rotsee (ROT21) to assess the impact of climate variability and eutrophication on the relative abundance of cyanobacteria. We reconstructed the relative proportions of cyanobacteria and eukaryotic algae using the abundance of phytol and phytosterols and compound-specific hydrogen isotope ratios of C16:0 fatty acid and phytol. We compared lipid-based proxies with hyperspectral imaging (HSI) scans of phycocyanin and pigment distributions from pigment extractions. We further used HSI scans of bacteriopheophytin a and e as proxies for lake stratification. We compared the distributions of phytol and phytosterols in ROT21 to published high-resolution data from a previously collected short core (ROT09) from Naeher et al. (2012) (https://doi.org/10.1016/j.orggeochem.2012.05.014) to assess the impact of 20th century eutrophication on the phytoplankton community.
 
-### This repository contains all datasets from ROT21 from this study and respective R scripts for analysis and visualization. 
+#### This repository contains all datasets from ROT21 from this study and respective R scripts for analysis and visualization. 
 
 ## 01_Data
 
