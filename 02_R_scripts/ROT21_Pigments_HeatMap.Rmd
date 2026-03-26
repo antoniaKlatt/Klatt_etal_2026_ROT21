@@ -20,9 +20,9 @@ pacman::p_load("readxl", "dplyr", "tidyr", "openxlsx", "FactoMineR", "cluster", 
 ##Import pigment data (pigment area on HPLC) and pigment producers
 
 
-pig_d <- read_excel("C:\\Users\\klatt0000\\Desktop\\Basel AG Ladd\\PhD project\\PhD thesis\\Chapter 3 ROT21\\C3_Rscripts\\R_markdown\\Ch3_data_forR\\ROT21_pigmentExtracts.xlsx", sheet = "pig_area")
+pig_d <- read_excel(here("01_Data","ROT21_pigmentExtracts.xlsx"), sheet = "pig_area")
 
-pig_prod <- read_excel("C:\\Users\\klatt0000\\Desktop\\Basel AG Ladd\\PhD project\\PhD thesis\\Chapter 3 ROT21\\C3_Rscripts\\R_markdown\\Ch3_data_forR\\ROT21_pigmentExtracts.xlsx", sheet = "pig_prod")
+pig_prod <- read_excel(here("01_Data","ROT21_pigmentExtracts.xlsx"), sheet = "pig_prod")
 
 pig_prod_df <- as.data.frame(pig_prod)
 rownames(pig_prod_df) <- pig_prod_df[,2]
