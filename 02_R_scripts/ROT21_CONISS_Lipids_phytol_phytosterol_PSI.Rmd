@@ -30,7 +30,7 @@ library(dendextend)
 
 #absolute concentrations (ug/g TOC)
 
-ROT21_lipids_ug_gTOC <- read.csv("C:\\Users\\klatt0000\\Desktop\\Basel AG Ladd\\PhD project\\PhD thesis\\Chapter 3 ROT21\\C3_Rscripts\\R_markdown\\Ch3_data_forR\\ROT21_lipids_ug_gTOC.csv", header = TRUE , sep = "," , stringsAsFactors = FALSE, na.strings = "#NV")
+ROT21_lipids_ug_gTOC <- read.csv(here("01_Data","ROT21_lipids_ug_gTOC.csv"), header = TRUE , sep = "," , stringsAsFactors = FALSE, na.strings = "#NV")
 
 ##add +1 to get rid of zeros for log transformation
 
@@ -41,18 +41,18 @@ ROT21_lipids_ug_gTOC2$age_BP_1950 <- ROT21_lipids_ug_gTOC$age_BP_1950
 
 #relative concentrations (%)
 
-ROT21_lipids_rel <- read.csv("C:\\Users\\klatt0000\\Desktop\\Basel AG Ladd\\PhD project\\PhD thesis\\Chapter 3 ROT21\\C3_Rscripts\\R_markdown\\Ch3_data_forR\\ROT21_lipids_rel_conc.csv", header = TRUE , sep = "," , stringsAsFactors = FALSE, na.strings = "#NV", row.names= 1)
+ROT21_lipids_rel <- read.csv(here("01_Data","ROT21_lipids_rel_conc.csv"), header = TRUE , sep = "," , stringsAsFactors = FALSE, na.strings = "#NV", row.names= 1)
 
 
 #Phytol:sterol Index (PSI)
 
-ROT21_PSI <- read.csv("C:\\Users\\klatt0000\\Desktop\\Basel AG Ladd\\PhD project\\PhD thesis\\Chapter 3 ROT21\\C3_Rscripts\\R_markdown\\Ch3_data_forR\\ROT21_phytol_sterol_index.csv", header = TRUE , sep = "," , stringsAsFactors = FALSE, na.strings = "#NV")
+ROT21_PSI <- read.csv(here("01_Data","ROT21_phytol_sterol_index.csv"), header = TRUE , sep = "," , stringsAsFactors = FALSE, na.strings = "#NV")
 
 #GAM fitted trend for PSI
 
-GAM_ci_phytol.sterol.ratio <-  read.csv("C:\\Users\\klatt0000\\Desktop\\Basel AG Ladd\\PhD project\\PhD thesis\\Chapter 3 ROT21\\C3_Rscripts\\R_markdown\\Ch3_data_forR\\GAM_ci_PSI_260325.csv", header = TRUE , sep = "," , stringsAsFactors = FALSE, na.strings = "#NV")
+GAM_ci_phytol.sterol.ratio <-  read.csv(here("01_Data","GAM_ci_PSI_260325.csv"), header = TRUE , sep = "," , stringsAsFactors = FALSE, na.strings = "#NV")
 
-GAM_signif_phytol.sterol.ratio <-  read.csv("C:\\Users\\klatt0000\\Desktop\\Basel AG Ladd\\PhD project\\PhD thesis\\Chapter 3 ROT21\\C3_Rscripts\\R_markdown\\Ch3_data_forR\\GAM_signif_PSI_260325.csv", header = TRUE , sep = "," , stringsAsFactors = FALSE, na.strings = "#NV")
+GAM_signif_phytol.sterol.ratio <-  read.csv(here("01_Data","GAM_signif_PSI_260325.csv"), header = TRUE , sep = "," , stringsAsFactors = FALSE, na.strings = "#NV")
 
 
 ```
