@@ -22,7 +22,7 @@ library(caret)
 
 #Import d2H data
 
-ROT21_d2H <- read.csv("C:\\Users\\klatt0000\\Desktop\\Basel AG Ladd\\PhD project\\PhD thesis\\Chapter 3 ROT21\\C3_Rscripts\\R_markdown\\Ch3_data_forR\\ROT21_d2H_Lipids.csv", header = TRUE , sep = "," , stringsAsFactors = FALSE, na.strings = "#NV")
+ROT21_d2H <- read.csv(here("01_Data","ROT21_d2H_Lipids.csv"), header = TRUE , sep = "," , stringsAsFactors = FALSE, na.strings = "#NV")
 
 ##note: d2H C25 n-alkane data are from Santos et al. (2026)
 ##https://doi.org/10.1029/2025PA005401
