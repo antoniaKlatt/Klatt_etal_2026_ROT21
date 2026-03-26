@@ -22,10 +22,10 @@ library(gam)
 
 #Import tetrahymanol and HSI data
 
-ROT21_Tetra <- read.csv("C:\\Users\\klatt0000\\Desktop\\Basel AG Ladd\\PhD project\\PhD thesis\\Chapter 3 ROT21\\C3_Rscripts\\R_markdown\\Ch3_data_forR\\ROT21_tetrahymanol.csv", header = TRUE , sep = "," , stringsAsFactors = FALSE, na.strings = "#NV")
+ROT21_Tetra <- read.csv(here("01_Data","ROT21_tetrahymanol.csv"), header = TRUE , sep = "," , stringsAsFactors = FALSE, na.strings = "#NV")
 
 
-ROT21_HSI <- read.csv("C:\\Users\\klatt0000\\Desktop\\Basel AG Ladd\\PhD project\\PhD thesis\\Chapter 3 ROT21\\C3_Rscripts\\R_markdown\\Ch3_data_forR\\ROT21_HSI.csv", header = TRUE , sep = "," , stringsAsFactors = FALSE, na.strings = "#NV")
+ROT21_HSI <- read.csv(here("01_Data","ROT21_HSI.csv)", header = TRUE , sep = "," , stringsAsFactors = FALSE, na.strings = "#NV")
 
 #note for Relative Absorption Depths (RABD)
 
