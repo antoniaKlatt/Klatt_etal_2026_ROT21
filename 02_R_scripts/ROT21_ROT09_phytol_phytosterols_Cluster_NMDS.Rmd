@@ -26,9 +26,9 @@ library(factoextra)
 
 #Import ROT21 ROT09 phytol phytosterol relative concentration data
 
-ROT21_ROT09_phytos_rel_conc.a <- read.csv('C:\\Users\\klatt0000\\Desktop\\Basel AG Ladd\\PhD project\\PhD thesis\\Chapter 3 ROT21\\C3_Rscripts\\R_markdown\\Ch3_data_forR\\ROT21_ROT09_phytol_phytosterols_rel_conc.csv', header = TRUE , sep = "," , stringsAsFactors = FALSE, na.strings = "#NV")
+ROT21_ROT09_phytos_rel_conc.a <- read.csv(here("01_Data","ROT21_ROT09_phytol_phytosterols_rel_conc.csv"), header = TRUE , sep = "," , stringsAsFactors = FALSE, na.strings = "#NV")
 
-#data from the short core (ROT09) are from Naeher et al. (2012)
+#note: data from the short core (ROT09) are from Naeher et al. (2012)
 #https://doi.org/10.1016/j.orggeochem.2012.05.014
 
 
