@@ -31,11 +31,11 @@ library(dplyr)
 
 #Phytol:sterol index (PSI)
 
-ROT21_PSI <- read.csv("C:\\Users\\klatt0000\\Desktop\\Basel AG Ladd\\PhD project\\PhD thesis\\Chapter 3 ROT21\\C3_Rscripts\\R_markdown\\Ch3_data_forR\\ROT21_phytol_sterol_index.csv", header = TRUE , sep = "," , stringsAsFactors = FALSE, na.strings = "#NV")
+ROT21_PSI <- read.csv(here("01_Data","ROT21_phytol_sterol_index.csv"), header = TRUE , sep = "," , stringsAsFactors = FALSE, na.strings = "#NV")
 
 #d2H data 
 
-ROT21_d2H <- read.csv("C:\\Users\\klatt0000\\Desktop\\Basel AG Ladd\\PhD project\\PhD thesis\\Chapter 3 ROT21\\C3_Rscripts\\R_markdown\\Ch3_data_forR\\ROT21_d2H_Lipids.csv", header = TRUE , sep = "," , stringsAsFactors = FALSE, na.strings = "#NV")
+ROT21_d2H <- read.csv(here("01_Data","ROT21_d2H_Lipids.csv"), header = TRUE , sep = "," , stringsAsFactors = FALSE, na.strings = "#NV")
 
 ```
 
@@ -138,9 +138,11 @@ ggplot() +
   theme(panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank())
 
-
 #export d2H GAM fits
 
+#write.csv(fv_d2H_ds, "fv_d2H_ds_260325.csv")
+
+#write.csv(dt_d2H, "dt_d2H_260325.csv")
 #write.csv(fv_d2H_ds, "fv_d2H_ds_260325.csv")
 
 #write.csv(dt_d2H, "dt_d2H_260325.csv")
