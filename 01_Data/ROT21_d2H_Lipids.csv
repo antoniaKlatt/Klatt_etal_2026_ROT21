@@ -1,4 +1,4 @@
-sample,XRF_true_surface,age_BP_1950,C16.0.Avg.d2H.VSMOW,C16.0.SD.d2H.VSMOW,phytol.Avg.d2H.VSMOW,phytol.SD.d2H.VSMOW,C25_n.alk_d2H_10.V,C25_StdDev.of.d2H.VSMOW2_10.V,epsilon_C16.0.phytol,epsilon_C16.0.C25Alk,epsilon_phytol.C25Alk,comment
+sample,XRF_depth_cm,age_BP_1950,C16.0.Avg.d2H.VSMOW,C16.0.SD.d2H.VSMOW,phytol.Avg.d2H.VSMOW,phytol.SD.d2H.VSMOW,C25_n.alk_d2H_10.V,C25_StdDev.of.d2H.VSMOW2_10.V,epsilon_C16.0.phytol,epsilon_C16.0.C25Alk,epsilon_phytol.C25Alk,comment
 1_A_18-20_EDGE,29.3,-10.3871785,-201.4557084,2.255592798,-385.9425876,1.646282893,#NV,#NV,300.4391372,#NV,#NV,d2H C25 n-alkane data are from Santos et al. (2026): https://doi.org/10.1029/2025PA005401
 1_A_28-30_EDGE,39.3,4.047767,-194.880067,0.762979509,-379.1048554,2.174158351,#NV,#NV,296.7083734,#NV,#NV,
 1_A_48-50_EDGE,59.3,26.772938,-207.4930995,2.116771052,-363.4029876,0.389317377,#NV,#NV,244.9114355,#NV,#NV,
